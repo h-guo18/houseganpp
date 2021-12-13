@@ -94,7 +94,7 @@ def main():
         masks = _infer(graph, model, state)
         im0 = draw_masks(masks.copy(), real_nodes)
         im0 = torch.tensor(np.array(im0).transpose((2, 0, 1)))/255.0 
-        # save_image(im0, './{}/fp_init_{}.png'.format(opt.out, i), nrow=1, normalize=False) # visualize init image
+        save_image(im0, './{}/fp_init_{}.png'.format(opt.out, i), nrow=1, normalize=False) # visualize init image
 
         # generate per room type
         for _iter, _types in enumerate(selected_types):

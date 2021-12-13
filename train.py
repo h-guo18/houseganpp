@@ -25,12 +25,12 @@ parser.add_argument("--g_lr", type=float, default=0.0001, help="adam: learning r
 parser.add_argument("--d_lr", type=float, default=0.0001, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
-parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
+parser.add_argument("--n_cpu", type=int, default=0, help="number of cpu threads to use during batch generation")
 parser.add_argument("--sample_interval", type=int, default=5000, help="interval between image sampling")
 parser.add_argument("--exp_folder", type=str, default='exp', help="destination folder")
 parser.add_argument("--n_critic", type=int, default=1, help="number of training steps for discriminator per iter")
-parser.add_argument("--target_set", type=int, default=8, choices=[5, 6, 7, 8], help="which split to remove")
-parser.add_argument("--data_path", type=str, default='/home/nelson/Workspace/autodesk/', help="path to the dataset")
+parser.add_argument("--target_set", type=int, default=5, choices=[5, 6, 7, 8], help="which split to remove")
+parser.add_argument("--data_path", type=str, default='./data/sample_list.txt', help="path to the dataset")
 parser.add_argument("--lambda_gp", type=int, default=10, help="lambda for gradient penalty")
 opt = parser.parse_args()
 
@@ -109,6 +109,7 @@ Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTen
 # ----------
 #  Training
 # ----------
+
 batches_done = 0
 for epoch in range(opt.n_epochs):
     for i, batch in enumerate(fp_loader):
@@ -118,7 +119,7 @@ for epoch in range(opt.n_epochs):
         # Adversarial ground truths
         batch_size = torch.max(nd_to_sample) + 1
         valid = Variable(Tensor(batch_size, 1)\
-                         .fill_(1.0), requires_grad=False)
+                        .fill_(1.0), requires_grad=False)
         fake = Variable(Tensor(batch_size, 1)\
                         .fill_(0.0), requires_grad=False)
         # Configure input
@@ -147,14 +148,14 @@ for epoch in range(opt.n_epochs):
         real_validity = discriminator(real_mks, given_nds, given_eds, nd_to_sample)
         # Fake images
         fake_validity = discriminator(gen_mks.detach(), given_nds.detach(), \
-                                          given_eds.detach(), nd_to_sample.detach())
+                                        given_eds.detach(), nd_to_sample.detach())
         # Measure discriminator's ability to classify real from generated samples
         gradient_penalty = compute_gradient_penalty(discriminator, real_mks.data, \
                                                         gen_mks.data, given_nds.data, \
                                                         given_eds.data, nd_to_sample.data, \
                                                         None)
         d_loss = -torch.mean(real_validity) + torch.mean(fake_validity) \
-                 + opt.lambda_gp * gradient_penalty
+                + opt.lambda_gp * gradient_penalty
         # Update discriminator
         d_loss.backward()
         optimizer_D.step()
@@ -217,3 +218,5 @@ def reader(filename):
         for l in range(len(eds_to_rms)):
             eds_to_rms_tmp.append([eds_to_rms[l][0]])
         return rms_type,fp_eds,rms_bbs,eds_to_rms,eds_to_rms_tmp
+        
+
